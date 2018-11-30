@@ -4,13 +4,12 @@ package azure
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"log"
-
 	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2015-06-15/network"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/adal"
 	"github.com/Azure/go-autorest/autorest/azure"
+	"io/ioutil"
+	"log"
 )
 
 type Provider struct {
@@ -29,6 +28,7 @@ func (p *Provider) Help() string {
    client_id:         The id of the client
    subscription_id:   The id of the subscription
    secret_access_key: The authentication credential
+   environment:       The Azure cloud environment
 
    Use these configuration parameters when using tags:
 
@@ -69,15 +69,24 @@ func (p *Provider) Addrs(args map[string]string, l *log.Logger) ([]string, error
 	// Use resourceGroup and vmScaleSet if using vm scale sets
 	resourceGroup := args["resource_group"]
 	vmScaleSet := args["vm_scale_set"]
+	environment := args["environment"]
 
-	// Only works for the Azure PublicCLoud for now; no ability to test other Environment
-	oauthConfig, err := adal.NewOAuthConfig(azure.PublicCloud.ActiveDirectoryEndpoint, tenantID)
+	if environment == "" {
+		environment = "PublicCloud"
+	}
+
+	envConfig, err := azure.EnvironmentFromName(environment)
+	if err != nil {
+		return nil, fmt.Errorf("discover-azure: %s", err)
+	}
+
+	oauthConfig, err := adal.NewOAuthConfig(envConfig.ActiveDirectoryEndpoint, tenantID)
 	if err != nil {
 		return nil, fmt.Errorf("discover-azure: %s", err)
 	}
 
 	// Get the ServicePrincipalToken for use searching the NetworkInterfaces
-	sbt, err := adal.NewServicePrincipalToken(*oauthConfig, clientID, secretKey, azure.PublicCloud.ResourceManagerEndpoint)
+	sbt, err := adal.NewServicePrincipalToken(*oauthConfig, clientID, secretKey, envConfig.ResourceManagerEndpoint)
 	if err != nil {
 		return nil, fmt.Errorf("discover-azure: %s", err)
 	}
