@@ -72,7 +72,7 @@ func (p *Provider) Addrs(args map[string]string, l *log.Logger) ([]string, error
 	environment := args["environment"]
 
 	if environment == "" {
-		environment = "PublicCloud"
+		environment = "AzurePublicCloud"
 	}
 
 	envConfig, err := azure.EnvironmentFromName(environment)
