@@ -4,12 +4,13 @@ package azure
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"log"
+
 	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2015-06-15/network"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/adal"
 	"github.com/Azure/go-autorest/autorest/azure"
-	"io/ioutil"
-	"log"
 )
 
 type Provider struct {
@@ -92,7 +93,7 @@ func (p *Provider) Addrs(args map[string]string, l *log.Logger) ([]string, error
 	}
 
 	// Setup the client using autorest; followed the structure from Terraform
-	vmnet := network.NewInterfacesClient(subscriptionID)
+	vmnet := network.NewInterfacesClientWithBaseURI(envConfig.ResourceManagerEndpoint, subscriptionID)
 	vmnet.Sender = autorest.CreateSender(autorest.WithLogging(l))
 	vmnet.Authorizer = autorest.NewBearerAuthorizer(sbt)
 
